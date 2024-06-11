@@ -139,7 +139,7 @@ func obtainAttribute(data []byte) (string, []byte) {
 		numberOne, _ = strconv.Atoi(fmt.Sprintf("%x", data[1]))
 		if numberOne >= 81 && numberOne <= 89 {
 			numberTwo := int(bytesToInt(data[2 : numberOne-78]))
-			Value := getSpecialInfo(data[numberOne-78 : numberTwo+numberOne-78])
+			Value := isPrintableInfo(data[numberOne-78 : numberTwo+numberOne-78])
 			data = data[numberTwo+numberOne-78:]
 			content += Value + "\n "
 		} else {
@@ -172,25 +172,6 @@ func obtainObject(data []byte) (string, []byte) {
 	}
 }
 
-// 读取TCP通道中的数据
-//func readData(conn net.Conn) ([]byte, error) {
-//	var buf []byte              // big buffer
-//	var tmp = make([]byte, 256) // using small tmo buffer for demonstrating
-//	for {
-//		//设置读取超时Deadline
-//		_ = conn.SetReadDeadline(time.Now().Add(time.Second * 3))
-//		length, err := conn.Read(tmp)
-//		buf = append(buf, tmp[:length]...)
-//		if length < len(tmp) {
-//			break
-//		}
-//		if err != nil {
-//			return buf, err
-//		}
-//	}
-//	return buf, nil
-//}
-
 func readData(conn net.Conn) ([]byte, error) {
 	bufferBind := make([]byte, 4096)
 	r, err := conn.Read(bufferBind)
@@ -208,9 +189,8 @@ func bytesToInt(b []byte) uint64 {
 	return result
 }
 
-func getSpecialInfo(bytes []byte) string {
-	resultStr := ""
-	// 判断是否为可印字符
+func isPrintableInfo(bytes []byte) string {
+	str := ""
 	for _, b := range bytes {
 		if b >= 32 && b <= 126 {
 			resultStr += fmt.Sprintf("%c", b)
@@ -218,5 +198,5 @@ func getSpecialInfo(bytes []byte) string {
 			resultStr += fmt.Sprintf("\\x%02X", b)
 		}
 	}
-	return resultStr
+	return str
 }
