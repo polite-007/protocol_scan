@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
-	"protocol_scan/lib"
+	"protocol_scan/script"
 )
 
 func main() {
-	fmt.Println(lib.Ldap_rootdse_scan("84.46.250.218:389"))
+	result, err := script.Smb_protocol_scan("39.175.75.67:445")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Print(result)
 }
