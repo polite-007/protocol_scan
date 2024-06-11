@@ -193,9 +193,9 @@ func isPrintableInfo(bytes []byte) string {
 	str := ""
 	for _, b := range bytes {
 		if b >= 32 && b <= 126 {
-			resultStr += fmt.Sprintf("%c", b)
+			str += fmt.Sprintf("%c", b)
 		} else {
-			resultStr += fmt.Sprintf("\\x%02X", b)
+			str += fmt.Sprintf("\\x%02X", b)
 		}
 	}
 	return str
