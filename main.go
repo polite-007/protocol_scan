@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-	fmt.Println(lib.Ldap_rootdse_scan("84.46.250.218"))
+	fmt.Println(lib.Ldap_rootdse_scan("84.46.250.218:389"))
 }

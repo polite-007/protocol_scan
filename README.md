@@ -5,4 +5,4 @@
 ldap-rootdse [nmap脚本地址](https://nmap.org/nsedoc/scripts/ldap-rootdse.html)
 
 ### example
-fmt.Print(lib.Ldap_rootdse_scan("201.76.172.51"))
+fmt.Print(lib.Ldap_rootdse_scan("201.76.172.51:389"))
