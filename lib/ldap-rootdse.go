@@ -1,3 +1,5 @@
+package lib
+
 import (
 	"fmt"
 	"net"
