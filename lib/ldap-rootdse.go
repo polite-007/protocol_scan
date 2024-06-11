@@ -54,12 +54,15 @@ func Ldap_rootdse_scan(addr string) string {
 	if err != nil {
 		return "Have LDAP Server, But No Data"
 	}
-	res, err = readData(conn)
-	if err != nil {
-		return "read error"
-	}
-	if res == nil {
-		return "Have LDAP Server, But No Data"
+
+	for fmt.Sprintf("%x", res) == "300c02010265070a010004000400" || strings.Contains(fmt.Sprintf("%x", res), "746f70040f4f70656e4c444150726f6f74445345") {
+		res, err = readData(conn)
+		if err != nil {
+			return "read error"
+		}
+		if len(res) == 0 {
+			return "Have LDAP Server, But No Data"
+		}
 	}
 	result, err = searchResEntryParse(res)
 	if err != nil {
@@ -73,7 +76,7 @@ func searchResEntryParse(data []byte) (string, error) {
 	var contentAll string
 	var content string
 
-	// 替换掉可能出现的searchResDne数据
+	//替换掉可能出现的searchResDne数据
 	if strings.Contains(fmt.Sprintf("%x", data), "070a010004000400") {
 		for i := len(data); ; i-- {
 			if data[i-1] == 0x30 {
@@ -81,6 +84,10 @@ func searchResEntryParse(data []byte) (string, error) {
 				break
 			}
 		}
+	}
+
+	if len(data) == 0 {
+		return "Have LDAP Server, But No Data", nil
 	}
 
 	// 获取searchResEntry数据
