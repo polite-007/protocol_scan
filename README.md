@@ -5,4 +5,4 @@ Using the go language to implement nmap various protocols scanning scripts/ä½¿ç”
 ldap-rootdse
 
 ### example
-fmt.Print(protocol.Ldap_rootdse_scan("201.76.172.51"))
+fmt.Print(lib.Ldap_rootdse_scan("201.76.172.51"))
