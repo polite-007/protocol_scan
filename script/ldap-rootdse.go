@@ -43,8 +43,11 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 
 		lengthType, _ := strconv.ParseInt(fmt.Sprintf("%x", data[0]), 16, 64)
 		valueType := fmt.Sprintf("%s", data[1:lengthType+1])
-		data = data[lengthType+1:]
+		data = safeSlice(data, int(lengthType)-1)
 		content = valueType + ":\n "
+		if len(data) == 0 {
+			return content, nil
+		}
 		numberOne, _ = strconv.Atoi(fmt.Sprintf("%x", data[1]))
 		if numberOne < 81 || numberOne > 89 {
 			data = data[2:]
@@ -63,12 +66,20 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 			if numberOne >= 81 && numberOne <= 89 {
 				numberTwo := int(bytesToInt(data[2 : numberOne-78]))
 				Value := isPrintableInfo(data[numberOne-78 : numberTwo+numberOne-78])
-				data = data[numberTwo+numberOne-78:]
+				if len(data) >= numberTwo+numberOne-78 {
+					data = data[numberTwo+numberOne-78:]
+				} else {
+					return strings.TrimRight(content, "\n "), data
+				}
 				content += Value + "\n "
 			} else {
 				lengthValue, _ := strconv.ParseInt(fmt.Sprintf("%x", data[1]), 16, 64)
 				Value := fmt.Sprintf("%s", data[2:lengthValue+2])
-				data = data[lengthValue+2:]
+				if len(data) >= int(lengthValue)+2 {
+					data = data[lengthValue+2:]
+				} else {
+					return strings.TrimRight(content, "\n "), data
+				}
 				content += Value + "\n "
 			}
 		}
@@ -90,11 +101,9 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 				}
 			}
 		}
-
 		if len(data) == 0 {
 			return "", fmt.Errorf("Have LDAP Server, But No Data")
 		}
-
 		// 获取searchResEntry数据
 		numberOne, _ := strconv.Atoi(fmt.Sprintf("%x", data[1]))
 		if numberOne < 81 || numberOne > 89 {
@@ -104,12 +113,7 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 		}
 
 		// 解析出LDAP的attributes数据
-		cname, str := obtainObject(searchResEntry)
-		if cname == "" {
-			fmt.Println("objectname:null")
-		} else {
-			fmt.Println("objectname:" + cname)
-		}
+		_, str := obtainObject(searchResEntry)
 
 		// 解析出LDAP的type数据和vals
 		for len(str) != 0 {
