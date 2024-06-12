@@ -102,12 +102,12 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 			}
 		}
 		if len(data) == 0 {
-			return "", fmt.Errorf("Have LDAP Server, But No Data")
+			return "", fmt.Errorf("have ldap server, but no data")
 		}
 		// 获取searchResEntry数据
 		numberOne, _ := strconv.Atoi(fmt.Sprintf("%x", data[1]))
 		if numberOne < 81 || numberOne > 89 {
-			return "", fmt.Errorf("searchResEntryParse: %s", "data is not searchResEntry")
+			return "", fmt.Errorf("data is not searchResEntry")
 		} else {
 			searchResEntry = data[numberOne-75:]
 		}
@@ -175,7 +175,7 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 			return "", err
 		}
 		if len(res) == 0 {
-			return "", fmt.Errorf("Have LDAP Server, But No Data")
+			return "", fmt.Errorf("have ldap server, but no data")
 		}
 	}
 	result, err = searchResEntryParse(res)

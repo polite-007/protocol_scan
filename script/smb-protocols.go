@@ -26,7 +26,7 @@ func Smb_protocol_scan(addr string) (string, error) {
 	}
 	defer conn.Close()
 
-	// 判断LDAP服务是否开启
+	// 判断LDAP服务是否开启和版本
 	payload, _ := hex.DecodeString(payload_list["all"])
 	_, err = conn.Write(payload)
 	if err != nil {
@@ -39,5 +39,7 @@ func Smb_protocol_scan(addr string) (string, error) {
 	if !strings.Contains(fmt.Sprintf("%x", res), "fe534d42") {
 		return "", fmt.Errorf("smb-protocol scan failed")
 	}
-	return fmt.Sprintf("%x", res[72:74]), err
+	res = append(res[73:74], res[72:73]...)
+
+	return fmt.Sprintf("%x", res), err
 }
