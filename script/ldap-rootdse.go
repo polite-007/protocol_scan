@@ -92,7 +92,7 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 		}
 
 		if len(data) == 0 {
-			return "Have LDAP Server, But No Data", nil
+			return "", fmt.Errorf("Have LDAP Server, But No Data")
 		}
 
 		// 获取searchResEntry数据
