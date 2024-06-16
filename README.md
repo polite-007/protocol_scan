@@ -2,7 +2,8 @@
 使用go语言手搓nmap各种协议扫描脚本，不使用nmap接口/Using the go language to implement nmap various protocols scanning scripts
 
 ### now achieved
-ldap-rootdse [nmap脚本地址](https://nmap.org/nsedoc/scripts/ldap-rootdse.html)
+* ldap-rootdse [nmap脚本地址](https://nmap.org/nsedoc/scripts/ldap-rootdse.html)
+* smb-protocols 正在编写中
 
 ### example
 ```
