@@ -10,15 +10,15 @@
 package main
 
 import (
-    "fmt"
-    "protocol_scan/script"
+	"fmt"
+	"protocol_scan/script"
 )
 
 func main() {
-    result, err := script.Smb_protocol_scan("39.175.75.67:445")
-    if err != nil {
-        fmt.Println(err)
-    }
-    fmt.Print(result)
+	result, err := script.Ldap_rootdse_scan("69.39.49.200:389")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Print(result)
 }
 ```
