@@ -50,7 +50,7 @@ func readData(conn net.Conn) ([]byte, error) {
 		if len(buf) > 4096 {
 			break
 		}
-		_ = conn.SetReadDeadline(time.Now().Add(time.Second * 10))
+		_ = conn.SetReadDeadline(time.Now().Add(time.Second * 5))
 	}
 	return buf, nil
 }
