@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	result, err := script.Ldap_rootdse_scan("60.204.149.158:389")
+	result, err := script.Smb_protocol_scan("36.138.182.244:445")
 	if err != nil {
 		fmt.Println(err)
 	}
