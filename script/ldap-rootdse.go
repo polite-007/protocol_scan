@@ -43,7 +43,7 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 
 		lengthType, _ := strconv.ParseInt(fmt.Sprintf("%x", data[0]), 16, 64)
 		valueType := fmt.Sprintf("%s", data[1:lengthType+1])
-		data = safeSlice(data, int(lengthType)+1)
+		data = data[lengthType+1:]
 		content = valueType + ":\n "
 		if len(data) == 0 {
 			return content, nil
@@ -92,18 +92,6 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 		var contentAll string
 		var content string
 
-		//替换掉可能出现的searchResDne数据
-		if strings.Contains(fmt.Sprintf("%x", data), "070a010004000400") {
-			for i := len(data); ; i-- {
-				if data[i-1] == 0x30 {
-					data = data[:i-1]
-					break
-				}
-			}
-		}
-		if len(data) == 0 {
-			return "", fmt.Errorf("have ldap server, but no data")
-		}
 		// 获取searchResEntry数据
 		numberOne, _ := strconv.Atoi(fmt.Sprintf("%x", data[1]))
 		if numberOne < 81 || numberOne > 89 {
@@ -170,7 +158,7 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 	}
 
 	for fmt.Sprintf("%x", res) == "300c02010265070a010004000400" || strings.Contains(fmt.Sprintf("%x", res), "746f70040f4f70656e4c444150726f6f74445345") {
-		res, err = readData(conn)
+		res, err = readDataLdap(conn)
 		if err != nil {
 			return "", err
 		}

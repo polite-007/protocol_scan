@@ -5,8 +5,77 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"time"
 )
+
+func readData(conn net.Conn) ([]byte, error) {
+	//读取数据
+	var buf []byte
+	var tmp = make([]byte, 256)
+	//循环读取数据
+	for {
+		length, err := conn.Read(tmp)
+		buf = append(buf, tmp[:length]...)
+		if length < len(tmp) {
+			break
+		}
+		if err != nil {
+			if err != io.EOF {
+				return nil, err
+			}
+			break
+		}
+	}
+	return buf, nil
+}
+
+func readDataLdap(conn net.Conn) ([]byte, error) {
+	var tmp = make([]byte, 2)
+	_, err := conn.Read(tmp)
+	if err != nil || len(tmp) < 2 {
+		return nil, fmt.Errorf("read fail or ldap length too short")
+	}
+
+	numberLdap, _ := strconv.Atoi(fmt.Sprintf("%x", tmp[1]))
+	if numberLdap > 80 && numberLdap < 90 {
+		var bufAll []byte
+		var allLength = make([]byte, numberLdap-80)
+		tmpLength, err := conn.Read(allLength)
+		if err != nil || tmpLength == 0 {
+			return nil, err
+		}
+		contentLength := int(bytesToInt(allLength))
+		tmpLengthValue := allLength
+		var ldapContent []byte
+		for {
+			var tmpLice = make([]byte, 256)
+			length, err := conn.Read(tmpLice)
+			ldapContent = append(ldapContent, tmpLice[:length]...)
+			if length < len(tmp) {
+				break
+			}
+			if err != nil {
+				if err != io.EOF {
+					return nil, err
+				}
+				break
+			}
+			if len(ldapContent) >= contentLength {
+				break
+			}
+		}
+		bufAll = append(bufAll, tmp...)
+		bufAll = append(bufAll, tmpLengthValue...)
+		bufAll = append(bufAll, ldapContent[:contentLength]...)
+		return bufAll, err
+	} else {
+		var bufAll = make([]byte, 4096)
+		length, err := conn.Read(bufAll)
+		if err != nil || length == 0 {
+			return nil, err
+		}
+		return bufAll[:length], nil
+	}
+}
 
 // 判断是否为可打印字符
 func isPrintableInfo(bytes []byte) string {
@@ -28,80 +97,4 @@ func bytesToInt(b []byte) uint64 {
 		result = (result << 8) | uint64(byteVal)
 	}
 	return result
-}
-
-func readData(conn net.Conn) ([]byte, error) {
-	//读取数据
-	var buf []byte              // big buffer
-	var tmp = make([]byte, 256) // using small tmp buffer for demonstrating
-	//设置读取超时Deadline
-	_ = conn.SetReadDeadline(time.Now().Add(time.Second * 3))
-	for {
-		length, err := conn.Read(tmp)
-		buf = append(buf, tmp[:length]...)
-		if length < len(tmp) {
-			break
-		}
-		if err != nil {
-			if err != io.EOF {
-				return nil, err
-			}
-			break
-		}
-		if len(buf) > 4096 {
-			break
-		}
-		_ = conn.SetReadDeadline(time.Now().Add(time.Second * 5))
-	}
-	return buf, nil
-}
-
-func readDataLdap(conn net.Conn) ([]byte, error) {
-	var bufAll = []byte{}
-	var tmp = make([]byte, 2)
-	_, err := conn.Read(tmp)
-	if err != nil {
-		return nil, err
-	}
-	numberLdap, _ := strconv.Atoi(fmt.Sprintf("%x", tmp[1]))
-	if numberLdap <= 80 && numberLdap >= 90 {
-		return nil, err
-	}
-	var tmpLength = make([]byte, numberLdap-80)
-	_, err = conn.Read(tmpLength)
-	if err != nil {
-		return nil, err
-	}
-	ldapLength := bytesToInt(tmpLength)
-	var ldapContent = []byte{}
-	for {
-		var tmplice = make([]byte, 256)
-		length, err := conn.Read(tmplice)
-		ldapContent = append(ldapContent, tmplice[:length]...)
-		if length < len(tmp) {
-			break
-		}
-		if err != nil {
-			if err != io.EOF {
-				return nil, err
-			}
-			break
-		}
-		if len(ldapContent) >= int(ldapLength) {
-			break
-		}
-	}
-	bufAll = append(bufAll, tmp...)
-	bufAll = append(bufAll, tmpLength...)
-	bufAll = append(bufAll, ldapContent[:int(ldapLength)]...)
-	return bufAll, err
-}
-
-func safeSlice(data []byte, lengthType int) []byte {
-	if lengthType >= 0 && lengthType < len(data) {
-		return data[lengthType:]
-	} else {
-		// 指定返回值，比如返回一个空切片或者错误信息
-		return []byte{} // 或者 return nil, errors.New("index out of range")
-	}
 }

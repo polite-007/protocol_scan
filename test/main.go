@@ -12,8 +12,8 @@ var wg sync.WaitGroup // 用于等待所有goroutine完成
 func scanLdap(server string, results chan<- map[string]interface{}, scriptName string) {
 	defer wg.Done() // 完成一个goroutine时减计数器
 	scriptLists := map[string]func(string) (string, error){
-		"ldap_rootdse":  script.Ldap_rootdse_scan,
-		"smb_protocols": script.Smb_protocol_scan,
+		"ldap-rootdse":  script.Ldap_rootdse_scan,
+		"smb-protocols": script.Smb_protocol_scan,
 	}
 	scriptname := scriptLists[scriptName]
 	if scriptname == nil {
@@ -29,16 +29,16 @@ func scanLdap(server string, results chan<- map[string]interface{}, scriptName s
 
 func main() {
 	//servers := []string{"45.151.2.178:389", "another.server:389", "yet.another:389"} // LDAP服务器列表
-	fmt.Println("现支持脚本名称: ldap_rootdse,smb_protocols")
+	fmt.Println("现支持脚本名称: ldap-rootdse,smb-protocols")
 	host := flag.String("host", "", "<host>:<port>")
 	scriptName := flag.String("script", "", "扫描的脚本名称")
-	number := flag.Int("number", 30, "测试线程数")
+	number := flag.Int("number", 15, "测试线程数")
 	flag.Parse()
 
 	//判断输入的脚本名称是否存在
 	scriptLists := map[string]func(string) (string, error){
-		"ldap_rootdse":  script.Ldap_rootdse_scan,
-		"smb_protocols": script.Smb_protocol_scan,
+		"ldap-rootdse":  script.Ldap_rootdse_scan,
+		"smb-protocols": script.Smb_protocol_scan,
 	}
 	scriptname := scriptLists[*scriptName]
 	if scriptname == nil {
