@@ -10,7 +10,7 @@ import (
 
 func Smb_protocol_scan(addr string) (string, error) {
 	var versionList string
-	var payloadList = map[string]string{
+	var payloadListMap = map[string]string{
 		"2.0.2": "00000066fe534d424000000000000000000000000000000000000000000000000000000000000000000000000000000000000000313233343536373839303132333435362400010001000000000000003132333435363738393031323334353600000000000000000202",
 		"2.1.0": "00000066fe534d424000000000000000000000000000000000000000000000000000000000000000000000000000000000000000313233343536373839303132333435362400010001000000000000003132333435363738393031323334353600000000000000001002",
 		"3.0.0": "00000066fe534d424000000000000000000000000000000000000000000000000000000000000000000000000000000000000000313233343536373839303132333435362400010001000000000000003132333435363738393031323334353600000000000000000003",
@@ -25,6 +25,7 @@ func Smb_protocol_scan(addr string) (string, error) {
 		"1002": "2.1.0",
 		"0202": "2.0.2",
 	}
+	var versionListArray = []string{"2.0.2", "2.1.0", "3.0.0", "3.0.2", "3.1.1"}
 	// 尝试TCP连接
 	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
@@ -33,7 +34,7 @@ func Smb_protocol_scan(addr string) (string, error) {
 	defer conn.Close()
 
 	// 判断SMB服务是否开启和版本
-	payloadAll, _ := hex.DecodeString(payloadList["all"])
+	payloadAll, _ := hex.DecodeString(payloadListMap["all"])
 	_, err = conn.Write(payloadAll)
 	if err != nil {
 		return "", err
@@ -45,15 +46,16 @@ func Smb_protocol_scan(addr string) (string, error) {
 	if !strings.Contains(fmt.Sprintf("%x", res), "fe534d42") {
 		return "", fmt.Errorf("no smb service")
 	}
-	if versionLists[fmt.Sprintf("%x", res[72:74])] == "" {
+	version := versionLists[fmt.Sprintf("%x", res[72:74])]
+	if version == "" {
 		return "", fmt.Errorf("smb version contain fail")
 	}
 
-	for i, _ := range payloadList {
-		if versionLists[fmt.Sprintf("%x", res[72:74])] == i {
+	for _, i := range versionListArray {
+		if version == i {
 			break
 		}
-		payload, _ := hex.DecodeString(payloadList[i])
+		payload, _ := hex.DecodeString(payloadListMap[i])
 
 		conn, err = net.DialTimeout("tcp", addr, 5*time.Second)
 		if err != nil {
@@ -70,7 +72,7 @@ func Smb_protocol_scan(addr string) (string, error) {
 		if !strings.Contains(fmt.Sprintf("%x", res), "fe534d42") || versionLists[fmt.Sprintf("%x", res[72:74])] == "" {
 			continue
 		}
-		versionList += versionLists[fmt.Sprintf("%x", res[72:74])] + "\n"
+		versionList += " " + versionLists[fmt.Sprintf("%x", res[72:74])] + "\n"
 	}
-	return "NT LM 0.12 (SMBv1)\n" + versionList, err
+	return "NT LM 0.12 (SMBv1)\n" + versionList + " " + version, err
 }

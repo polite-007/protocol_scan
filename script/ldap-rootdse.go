@@ -43,7 +43,7 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 
 		lengthType, _ := strconv.ParseInt(fmt.Sprintf("%x", data[0]), 16, 64)
 		valueType := fmt.Sprintf("%s", data[1:lengthType+1])
-		data = safeSlice(data, int(lengthType)-1)
+		data = safeSlice(data, int(lengthType)+1)
 		content = valueType + ":\n "
 		if len(data) == 0 {
 			return content, nil
@@ -138,7 +138,7 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	res, err = readData(conn)
+	res, err = readDataLdap(conn)
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +151,7 @@ func Ldap_rootdse_scan(addr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	res, err = readData(conn)
+	res, err = readDataLdap(conn)
 	if err != nil {
 		return "", err
 	}
