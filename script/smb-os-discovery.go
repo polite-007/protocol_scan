@@ -13,6 +13,7 @@ func Smb_os_discovery_scan(addr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer conn.Close()
 
 	// Negotiate Protocol Request/判断是否有smb服务
 	negotiateRequest, _ := hex.DecodeString("00000031ff534d4272000000001845680000000000000000000000000000461500000100000e00024e54204c4d20302e3132000200")
@@ -28,7 +29,6 @@ func Smb_os_discovery_scan(addr string) (string, error) {
 		fmt.Println(fmt.Sprintf("%x", res[4:8]))
 		return "", fmt.Errorf("no smb service")
 	}
-	defer conn.Close()
 
 	// Session Setup And Xact Secondary Request/获取操作系统信息
 	sessionRequest, _ := hex.DecodeString("00000091ff534d4273000000001845680000d3cf5cf2d0e5359600000000bd07000001000cff009100ffff0100010000000000420000000000500000805600604006062b0601050502a0363034a00e300c060a2b06010401823702020aa22204204e544c4d535350000100000015820800000000000000000000000000000000004e6d6170004e6174697665204c616e6d616e0000")
@@ -42,7 +42,13 @@ func Smb_os_discovery_scan(addr string) (string, error) {
 	}
 
 	sessionResponseContent := res[36:]
+	if len(sessionResponseContent) < 4 {
+		return isPrintableInfo(res), nil
+	}
 	securityBlobLength := bytesToInt(append([]byte{}, sessionResponseContent[8], sessionResponseContent[7]))
+
+	//securityBlobContent := res[47 : 47+securityBlobLength]
+
 	res = res[47+securityBlobLength:]
 	var nativeOs string
 	var nativeLanMan string
@@ -53,7 +59,5 @@ func Smb_os_discovery_scan(addr string) (string, error) {
 			break
 		}
 	}
-	fmt.Println("OS: " + nativeOs)
-	fmt.Println("Software: " + nativeLanMan)
-	return "", nil
+	return "OS: " + nativeOs + "\n" + "Software: " + nativeLanMan, nil
 }

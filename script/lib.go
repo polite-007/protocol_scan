@@ -32,8 +32,11 @@ func readDataSmb(conn net.Conn) ([]byte, error) {
 	var tmp = make([]byte, 4)
 	var smbContent []byte
 	_, err := conn.Read(tmp)
-	if err != nil || len(tmp) < 4 {
-		return nil, err
+	if err != nil {
+		if err != io.EOF {
+			return nil, err
+		}
+		return nil, fmt.Errorf("no data on tcp")
 	}
 	if len(tmp) < 4 {
 		return nil, fmt.Errorf("smb length too short")

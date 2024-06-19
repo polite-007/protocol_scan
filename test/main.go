@@ -29,11 +29,11 @@ func scanLdap(server string, results chan<- map[string]interface{}, scriptName s
 }
 
 func main() {
-	//servers := []string{"45.151.2.178:389", "another.server:389", "yet.another:389"} // LDAP服务器列表
 	fmt.Println("现支持脚本名称: ldap-rootdse,smb-protocols,smb-os-discovery")
-	host := flag.String("host", "", "<host>:<port>")
+	host := flag.String("host", "", "<ip>:<port>")
 	scriptName := flag.String("script", "", "扫描的脚本名称")
-	number := flag.Int("number", 15, "测试线程数")
+	isBrute := flag.String("on", "false", "是否开启测试模式，即并发打印结果长度")
+	number := flag.Int("num", 10, "测试线程数")
 	flag.Parse()
 
 	//判断输入的脚本名称是否存在
@@ -42,8 +42,7 @@ func main() {
 		"smb-protocols":    script.Smb_protocol_scan,
 		"smb-os-discovery": script.Smb_os_discovery_scan,
 	}
-	scriptname := scriptLists[*scriptName]
-	if scriptname == nil {
+	if _, ok := scriptLists[*scriptName]; !ok {
 		fmt.Println("脚本不存在")
 		return
 	}
@@ -51,6 +50,16 @@ func main() {
 	// 检查输入参数
 	if *host == "" || *scriptName == "" {
 		fmt.Println("请输入完整的参数")
+		return
+	}
+
+	if *isBrute != "true" {
+		content, err := scriptLists[*scriptName](*host)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+		fmt.Println(content)
 		return
 	}
 

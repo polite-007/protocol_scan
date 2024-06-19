@@ -50,6 +50,11 @@ func Smb_protocol_scan(addr string) (string, error) {
 	}
 	// 从低到高确认smb版本
 	for _, i := range versionListArray {
+		conn, err = net.DialTimeout("tcp", addr, 5*time.Second)
+		if err != nil {
+			return "", err
+		}
+		defer conn.Close()
 		if version == i {
 			break
 		}
