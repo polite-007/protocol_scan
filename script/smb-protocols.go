@@ -26,46 +26,39 @@ func Smb_protocol_scan(addr string) (string, error) {
 		"0202": "2.0.2",
 	}
 	var versionListArray = []string{"2.0.2", "2.1.0", "3.0.0", "3.0.2", "3.1.1"}
-	// 尝试TCP连接
+	// Negotiate Protocol Request/判断是否有smb服务以及smb版本
 	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
 		return "", err
 	}
 	defer conn.Close()
-
-	// 判断SMB服务是否开启和版本
 	payloadAll, _ := hex.DecodeString(payloadListMap["all"])
 	_, err = conn.Write(payloadAll)
 	if err != nil {
 		return "", err
 	}
-	res, err := readData(conn)
+	res, err := readDataSmb(conn)
 	if err != nil {
 		return "", err
 	}
-	if !strings.Contains(fmt.Sprintf("%x", res), "fe534d42") {
+	if !strings.Contains(fmt.Sprintf("%x", res[5:8]), "534d42") {
 		return "", fmt.Errorf("no smb service")
 	}
 	version := versionLists[fmt.Sprintf("%x", res[72:74])]
 	if version == "" {
 		return "", fmt.Errorf("smb version contain fail")
 	}
-
+	// 从低到高确认smb版本
 	for _, i := range versionListArray {
 		if version == i {
 			break
 		}
 		payload, _ := hex.DecodeString(payloadListMap[i])
-
-		conn, err = net.DialTimeout("tcp", addr, 5*time.Second)
-		if err != nil {
-			return "", err
-		}
 		_, err = conn.Write(payload)
 		if err != nil {
 			return "", err
 		}
-		res, err = readData(conn)
+		res, err = readDataSmb(conn)
 		if err != nil {
 			return "", err
 		}
@@ -74,5 +67,6 @@ func Smb_protocol_scan(addr string) (string, error) {
 		}
 		versionList += " " + versionLists[fmt.Sprintf("%x", res[72:74])] + "\n"
 	}
+	// 返回最终版本结果
 	return "NT LM 0.12 (SMBv1)\n" + versionList + " " + version, err
 }

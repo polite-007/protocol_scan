@@ -28,6 +28,37 @@ func readData(conn net.Conn) ([]byte, error) {
 	return buf, nil
 }
 
+func readDataSmb(conn net.Conn) ([]byte, error) {
+	var tmp = make([]byte, 4)
+	var smbContent []byte
+	_, err := conn.Read(tmp)
+	if err != nil || len(tmp) < 4 {
+		return nil, err
+	}
+	if len(tmp) < 4 {
+		return nil, fmt.Errorf("smb length too short")
+	}
+	lengthSmb := bytesToInt(tmp)
+	for {
+		var tmpLice = make([]byte, 256)
+		length, err := conn.Read(tmpLice)
+		smbContent = append(smbContent, tmpLice[:length]...)
+		if length < len(tmp) {
+			break
+		}
+		if err != nil {
+			if err != io.EOF {
+				return nil, err
+			}
+			break
+		}
+		if len(smbContent) >= int(lengthSmb) {
+			break
+		}
+	}
+	return append(tmp, smbContent[:lengthSmb]...), nil
+}
+
 func readDataLdap(conn net.Conn) ([]byte, error) {
 	var tmp = make([]byte, 2)
 	_, err := conn.Read(tmp)

@@ -4,7 +4,8 @@
 ### now supported
 * ldap-rootdse
 * smb-protocols
-* smb-os-discovery 正在编写中
+* smb-os-discovery 
+* smb-ls 正在编写中
 
 
 ### example
