@@ -3,112 +3,81 @@ package script
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
-	"strconv"
+	"time"
 )
 
-func readData(conn net.Conn) ([]byte, error) {
-	//读取数据
-	var buf []byte
-	var tmp = make([]byte, 256)
-	//循环读取数据
-	for {
-		length, err := conn.Read(tmp)
-		buf = append(buf, tmp[:length]...)
-		if length < len(tmp) {
-			break
-		}
-		if err != nil {
-			if err != io.EOF {
-				return nil, err
-			}
-			break
-		}
-	}
-	return buf, nil
-}
-
 func readDataSmb(conn net.Conn) ([]byte, error) {
-	var tmp = make([]byte, 4)
-	var smbContent []byte
-	_, err := conn.Read(tmp)
-	if err != nil {
-		if err != io.EOF {
-			return nil, err
-		}
-		return nil, fmt.Errorf("no data on tcp")
+	var bufAll []byte
+	var smbFirst = make([]byte, 4)
+	_, err := io.ReadFull(conn, smbFirst)
+	if err == io.EOF {
+		return nil, fmt.Errorf("no data on tcp or premature EOF")
+	} else if err != nil {
+		return nil, err
 	}
-	if len(tmp) < 4 {
-		return nil, fmt.Errorf("smb length too short")
-	}
-	lengthSmb := bytesToInt(tmp)
+	bufAll = append(bufAll, smbFirst...)
+	smbTwo := make([]byte, bytesToInt(smbFirst))
 	for {
-		var tmpLice = make([]byte, 256)
-		length, err := conn.Read(tmpLice)
-		smbContent = append(smbContent, tmpLice[:length]...)
-		if length < len(tmp) {
-			break
+		n, err := io.ReadFull(conn, smbTwo)
+		if n > 0 {
+			bufAll = append(bufAll, smbTwo[:n]...)
 		}
 		if err != nil {
-			if err != io.EOF {
-				return nil, err
+			if err == io.EOF {
+				break
 			}
-			break
-		}
-		if len(smbContent) >= int(lengthSmb) {
+			log.Printf("Error reading from connection: %v", err)
+			time.Sleep(2 * time.Second)
+		} else {
 			break
 		}
 	}
-	return append(tmp, smbContent[:lengthSmb]...), nil
+	return bufAll, nil
 }
 
 func readDataLdap(conn net.Conn) ([]byte, error) {
-	var tmp = make([]byte, 2)
-	_, err := conn.Read(tmp)
-	if err != nil || len(tmp) < 2 {
-		return nil, fmt.Errorf("read fail or ldap length too short")
+	var bufAll []byte
+	var ldapFirst = make([]byte, 2)
+	_, err := io.ReadFull(conn, ldapFirst)
+	if err == io.EOF {
+		return nil, fmt.Errorf("no data on tcp or premature EOF")
+	} else if err != nil {
+		return nil, err
 	}
-
-	numberLdap, _ := strconv.Atoi(fmt.Sprintf("%x", tmp[1]))
-	if numberLdap > 80 && numberLdap < 90 {
-		var bufAll []byte
-		var allLength = make([]byte, numberLdap-80)
-		tmpLength, err := conn.Read(allLength)
-		if err != nil || tmpLength == 0 {
+	ldapNumber := int(ldapFirst[1]) - 48
+	var ldapTwoLen int
+	if ldapNumber >= 81 && ldapNumber <= 89 {
+		var ldapTwo = make([]byte, ldapNumber-80)
+		_, err = io.ReadFull(conn, ldapTwo)
+		if err != nil {
 			return nil, err
 		}
-		contentLength := int(bytesToInt(allLength))
-		tmpLengthValue := allLength
-		var ldapContent []byte
-		for {
-			var tmpLice = make([]byte, 256)
-			length, err := conn.Read(tmpLice)
-			ldapContent = append(ldapContent, tmpLice[:length]...)
-			if length < len(tmp) {
-				break
-			}
-			if err != nil {
-				if err != io.EOF {
-					return nil, err
-				}
-				break
-			}
-			if len(ldapContent) >= contentLength {
-				break
-			}
-		}
-		bufAll = append(bufAll, tmp...)
-		bufAll = append(bufAll, tmpLengthValue...)
-		bufAll = append(bufAll, ldapContent[:contentLength]...)
-		return bufAll, err
+		ldapTwoLen = int(bytesToInt(ldapTwo))
+		bufAll = append(bufAll, ldapFirst...)
+		bufAll = append(bufAll, ldapTwo...)
 	} else {
-		var bufAll = make([]byte, 4096)
-		length, err := conn.Read(bufAll)
-		if err != nil || length == 0 {
-			return nil, err
-		}
-		return bufAll[:length], nil
+		ldapTwoLen = int(bytesToInt(ldapFirst[1:]))
+		bufAll = append(bufAll, ldapFirst...)
 	}
+	var ldapThree = make([]byte, ldapTwoLen)
+	for {
+		n, err := io.ReadFull(conn, ldapThree)
+		if n > 0 {
+			bufAll = append(bufAll, ldapThree[:n]...)
+		}
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Printf("Error reading from connection: %v", err)
+			time.Sleep(2 * time.Second)
+		} else {
+			break
+		}
+	}
+	return bufAll, nil
 }
 
 // 判断是否为可打印字符

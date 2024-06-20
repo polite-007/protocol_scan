@@ -26,7 +26,7 @@ func Smb_os_discovery_scan(addr string) (string, error) {
 		return "", err
 	}
 	if !strings.Contains(fmt.Sprintf("%x", res[4:8]), "fe534d42") && !strings.Contains(fmt.Sprintf("%x", res[4:8]), "ff534d42") {
-		fmt.Println(fmt.Sprintf("%x", res[4:8]))
+		fmt.Println(fmt.Sprintf("%x", res))
 		return "", fmt.Errorf("no smb service")
 	}
 
