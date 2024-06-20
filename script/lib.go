@@ -3,9 +3,7 @@ package script
 import (
 	"fmt"
 	"io"
-	"log"
 	"net"
-	"time"
 )
 
 func readDataSmb(conn net.Conn) ([]byte, error) {
@@ -19,64 +17,41 @@ func readDataSmb(conn net.Conn) ([]byte, error) {
 	}
 	bufAll = append(bufAll, smbFirst...)
 	smbTwo := make([]byte, bytesToInt(smbFirst))
-	for {
-		n, err := io.ReadFull(conn, smbTwo)
-		if n > 0 {
-			bufAll = append(bufAll, smbTwo[:n]...)
-		}
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			log.Printf("Error reading from connection: %v", err)
-			time.Sleep(2 * time.Second)
-		} else {
-			break
-		}
+	if _, err := io.ReadFull(conn, smbTwo); err != nil {
+		return nil, fmt.Errorf("reading smb content: %w", err)
 	}
+	bufAll = append(bufAll, smbTwo...)
 	return bufAll, nil
 }
 
 func readDataLdap(conn net.Conn) ([]byte, error) {
 	var bufAll []byte
 	var ldapFirst = make([]byte, 2)
-	_, err := io.ReadFull(conn, ldapFirst)
-	if err == io.EOF {
-		return nil, fmt.Errorf("no data on tcp or premature EOF")
-	} else if err != nil {
-		return nil, err
+	if _, err := io.ReadFull(conn, ldapFirst); err != nil {
+		return nil, fmt.Errorf("reading err: %w", err)
 	}
 	ldapNumber := int(ldapFirst[1]) - 48
 	var ldapTwoLen int
 	if ldapNumber >= 81 && ldapNumber <= 89 {
 		var ldapTwo = make([]byte, ldapNumber-80)
-		_, err = io.ReadFull(conn, ldapTwo)
+		_, err := io.ReadFull(conn, ldapTwo)
 		if err != nil {
 			return nil, err
 		}
 		ldapTwoLen = int(bytesToInt(ldapTwo))
 		bufAll = append(bufAll, ldapFirst...)
 		bufAll = append(bufAll, ldapTwo...)
-	} else {
+	} else if ldapNumber < 81 {
 		ldapTwoLen = int(bytesToInt(ldapFirst[1:]))
 		bufAll = append(bufAll, ldapFirst...)
+	} else {
+		return nil, fmt.Errorf("invalid LDAP packet length: 0x%x", ldapFirst[1])
 	}
 	var ldapThree = make([]byte, ldapTwoLen)
-	for {
-		n, err := io.ReadFull(conn, ldapThree)
-		if n > 0 {
-			bufAll = append(bufAll, ldapThree[:n]...)
-		}
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			log.Printf("Error reading from connection: %v", err)
-			time.Sleep(2 * time.Second)
-		} else {
-			break
-		}
+	if _, err := io.ReadFull(conn, ldapThree); err != nil {
+		return nil, fmt.Errorf("reading LDAP content: %w", err)
 	}
+	bufAll = append(bufAll, ldapThree...)
 	return bufAll, nil
 }
 
