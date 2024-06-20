@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	result, err := script.Smb_protocol_scan("36.138.182.244:445")
+	result, err := script.Smb_os_discovery_scan("183.244.234.105:445")
 	if err != nil {
 		fmt.Println(err)
 	}
