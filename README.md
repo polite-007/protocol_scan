@@ -14,14 +14,15 @@ package main
 
 import (
 	"fmt"
-	"protocol_scan/script"
+	"github.com/polite-007/protocol_scan/script"
 )
 
 func main() {
-	result, err := script.Ldap_rootdse_scan("69.39.49.200:389")
+	result, err := script.Smb_protocol_scan("183.244.234.105:445")
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Print(result)
 }
+
 ```
