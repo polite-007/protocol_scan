@@ -1,1 +1,1 @@
-module protocol_scan
+module github.com/polite-007/protocol_scan
