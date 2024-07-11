@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"protocol_scan/script"
+	"github.com/polite-007/protocol_scan/script"
 	"sync"
 )
 
